@@ -33,8 +33,6 @@ async function login(page, metamask) {
         try {
             var connectWallet = await page.$x('//div[@class="ConnectModal_connectTextContent__3K0PH"]//button[@class="Buttons_new__3FSMs"]');
 
-            console.log(connectWallet);
-
             if(connectWallet.length > 0) {
                 await connectWallet[0].click();
                 await metamask.approve();
