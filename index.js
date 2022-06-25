@@ -105,12 +105,6 @@ async function doQuest(page, metamask, browser, profession) {
             if(staminaNumber >= 25) {
                 console.log(new Date().today() + " " + new Date().timeNow() + " " +'hero has 25 or more energy, select him, ' + profession + ' quest');
                 
-                var test = await heros[heroCounter].$x('./../..');
-                console.log(await test[0].evaluate(el => el.tagName));
-                var test2 = await test[0].$x('.//span[contains(text(),"Select")]/..');
-
-                console.log(await test2[0].evaluate(el => el.tagName));
-                
                 var selectHero = await heros[heroCounter].$x('./../..//span[contains(text(),"Select")]/..');// page.$x('//div[contains(@class,"buy-heroes-list-box")][1]//button');
                 await selectHero[0].click();
 
@@ -229,6 +223,10 @@ async function doCheckQuest(page, metamask, browser, profession) {
     if(profession == Profession.Fishing || profession == Profession.Foraging) {
         if(stillWorking == null) {
             console.log(new Date().today() + " " + new Date().timeNow() + " " +'still working on ' + profession + ', return');
+            await page.keyboard.press('Escape');
+            await sleep(1000);
+            await page.keyboard.press('Escape');
+            await sleep(1000);
             return;
         } else {
             await completeQuestButton[1].click();
@@ -236,6 +234,10 @@ async function doCheckQuest(page, metamask, browser, profession) {
     } else {
         if(stillWorking != null) {
             console.log(new Date().today() + " " + new Date().timeNow() + " " +'still working on ' + profession + ', return');
+            await page.keyboard.press('Escape');
+            await sleep(1000);
+            await page.keyboard.press('Escape');
+            await sleep(1000);
             return;
         } else {
             await completeQuestButton[0].click();
