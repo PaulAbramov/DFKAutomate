@@ -70,9 +70,9 @@ async function doQuest(page, metamask, browser, profession) {
         await page.waitForXPath('//div[contains(text(), "JEWEL")]', { timeout: 120000 });
         const pools = await page.$x('//div[contains(@class, "bordered-box-thin")]');
 
-        let counter;
+        var counter;
         for (counter = 0; counter < pools.length; counter++) {
-            let name = await pools[counter].evaluate(el => el.textContent);
+            var name = await pools[counter].evaluate(el => el.textContent);
             if(name.startsWith("JEWEL-ONE")) {
                 var selectPoolButton = await pools[counter].waitForXPath('.//button[@class="Buttons_primary__Dm8vM"]');
                 await selectPoolButton.click();
@@ -86,17 +86,17 @@ async function doQuest(page, metamask, browser, profession) {
     await page.waitForXPath('//h4[contains(text(), "Profession")]/../p');
     const heros = await page.$x('//h4[contains(text(), "Profession")]/../p');
 
-    let heroCounter;
-    let selectedHeroCount = 0;
+    var heroCounter;
+    var selectedHeroCount = 0;
     for(heroCounter = 0; heroCounter < heros.length; heroCounter++) {
-        let professionToCheck = await heros[heroCounter].evaluate(el => el.textContent);
+        var professionToCheck = await heros[heroCounter].evaluate(el => el.textContent);
         console.log(new Date().today() + " " + new Date().timeNow() + " " +'hero with profession: ' + professionToCheck);
         
         await sleep(1000);
 
         if(professionToCheck === profession) {
             var staminaHero = await heros[heroCounter].$x('./../..//div[contains(text(),"Stamina")]//div[2]');
-            let stamina = await staminaHero[0].evaluate(el => el.textContent);
+            var stamina = await staminaHero[0].evaluate(el => el.textContent);
             console.log(new Date().today() + " " + new Date().timeNow() + " " +'hero has ' + stamina + ' stamina, ' + profession + ' quest');
 
             var staminaNumber = stamina.split("/")[0];
@@ -104,9 +104,19 @@ async function doQuest(page, metamask, browser, profession) {
                 console.log(new Date().today() + " " + new Date().timeNow() + " " +'hero has 25 or more energy, select him, ' + profession + ' quest');
                 
                 var selectHero = await heros[heroCounter].$x('./../..//span[contains(text(),"Select")]/..');// page.$x('//div[contains(@class,"buy-heroes-list-box")][1]//button');
-                await selectHero[0].click();
-
-                selectedHeroCount++;
+                
+                // This happens if it doesnt show active quest for any reason
+                if(selectHero[0] == null) {
+                    console.log(new Date().today() + " " + new Date().timeNow() + " " +'still working on ' + profession + ', return');
+                    await page.keyboard.press('Escape');
+                    await sleep(1000);
+                    await page.keyboard.press('Escape');
+                    await sleep(1000);
+                    return;
+                } else {
+                    await selectHero[0].click();
+                    selectedHeroCount++;
+                }
             } else {
                 console.log(new Date().today() + " " + new Date().timeNow() + " " +'not enough energy: ', staminaNumber);
                 continue;
@@ -204,42 +214,32 @@ async function doCheckQuest(page, metamask, browser, profession) {
     switch(profession) {
         case Profession.Fishing.name:
         case Profession.Foraging.name:
-            questStillOngoing = '//p[contains(text(),"Complete Quest")]';
+            questStillOngoing = '//p[contains(text(),"Complete Quest")]/..';
             break;
         case Profession.Gardening.name:
-            questStillOngoing = '//p[contains(text(),"Stop Gardening")]';
-            break;
         case Profession.Mining.name:
-            questStillOngoing = '//p[contains(text(),"Stop Mining")]';
+            questStillOngoing = '//p[contains(text(),"Collect Hero")]/..';
             break;
         default:
             console.log('profession not defined');
             return;
     }
 
-    var stillWorking = await page.waitForXPath(questStillOngoing);
-    if(profession == Profession.Fishing || profession == Profession.Foraging) {
-        if(stillWorking == null) {
-            console.log(new Date().today() + " " + new Date().timeNow() + " " +'still working on ' + profession + ', return');
-            await page.keyboard.press('Escape');
-            await sleep(1000);
-            await page.keyboard.press('Escape');
-            await sleep(1000);
-            return;
-        } else {
+    try {
+        await page.waitForXPath(questStillOngoing);
+
+        if(profession == Profession.Fishing.name || profession == Profession.Foraging.name) {
             await completeQuestButton[1].click();
-        }
-    } else {
-        if(stillWorking != null) {
-            console.log(new Date().today() + " " + new Date().timeNow() + " " +'still working on ' + profession + ', return');
-            await page.keyboard.press('Escape');
-            await sleep(1000);
-            await page.keyboard.press('Escape');
-            await sleep(1000);
-            return;
         } else {
             await completeQuestButton[0].click();
         }
+    } catch(err) {
+        console.log(new Date().today() + " " + new Date().timeNow() + " " +'still working on ' + profession + ', return');
+        await page.keyboard.press('Escape');
+        await sleep(1000);
+        await page.keyboard.press('Escape');
+        await sleep(1000);
+        return;
     }
 
     await sleep(3000);
@@ -254,8 +254,8 @@ async function doCheckQuest(page, metamask, browser, profession) {
             await page.bringToFront();
             await sleep(1000);
 
-            if(profession == Profession.Fishing ||
-                profession == Profession.Foraging) {
+            if(profession == Profession.Fishing.name ||
+                profession == Profession.Foraging.name) {
                 await completeQuestButton[1].click();
             } else {
                 await completeQuestButton[0].click();
@@ -290,9 +290,9 @@ async function main() {
     const page = await browser.newPage();
     
     await login(page, metamask);
-    await sleep(4000);
+    await sleep(60000);
 
-    let professions = Object.keys(Profession);
+    var professions = Object.keys(Profession);
     for (const profession of professions) {
         await doCheckQuest(page, metamask, browser, profession)
         await sleep(1000);
